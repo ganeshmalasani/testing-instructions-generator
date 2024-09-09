@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Case Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Include marked.js library -->
+    <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            padding: 55px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        #submit-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        #submit-button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generate Testing Instructions</h1>
+    <!-- Remove the form element; directly use event listeners on the button -->
+    <div>
+        <label for="context">Context (Optional):</label><br>
+        <textarea id="context" rows="4" cols="50"></textarea><br><br>
+
+        <label for="screenshots">Upload Screenshots:</label><br>
+        <input type="file" id="screenshots" multiple><br><br>
+
+        <button id="submit-button">Describe Testing Instructions</button> <!-- Use button with an ID -->
+    </div>
+
+    <h2>Result:</h2>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('submit-button').addEventListener('click', async function(event) {
+            event.preventDefault(); // Prevent page reload
+            await submitForm();
+        });
+
+        async function submitForm() {
+            const context = document.getElementById('context').value;
+            const files = document.getElementById('screenshots').files;
+
+            const formData = new FormData();
+            formData.append('context', context);
+            for (let i = 0; i < files.length; i++) {
+                formData.append('screenshots', files[i]);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/generate-instructions', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const markdownText = result.result;
+                const htmlContent = marked.parse(markdownText);  // Convert Markdown to HTML
+                document.getElementById('result').innerHTML = htmlContent;
+            } catch (error) {
+                console.error("Error during fetch:", error);
+                document.getElementById('result').innerText = "An error occurred: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
